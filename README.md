@@ -5,9 +5,6 @@
 ## Overview
 This tool allows Microsoft 365 users to export their personal Microsoft Teams 1:1 and group chat history using Microsoft Graph APIs. This version is modular, supports CLI parameters, and includes multiple output formats.
 
-![Example of Export HTML file](example-of-export.png)
-![Example of Exports in directory](example-of-exports.png)
-
 ## Features
 - ✅ Export personal chat history via Microsoft Graph API
 - 📂 Output formats: HTML (default), JSON, CSV
