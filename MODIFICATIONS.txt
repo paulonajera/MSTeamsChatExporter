@@ -22,7 +22,7 @@ CHANGES MADE:
      • -ClientId
      • -TenantId
      • -Domain
-     • -AsJson, -AsCsv, -NoImages, -SplitByMonth (CLI flags)
+     • -AsJson, -AsCsv, -NoImages, -SplitByMonth (CLI flags), -WhatIf, -Confirm
    - Added logging with timestamps
 
 3. New Output Format Support:
