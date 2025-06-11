@@ -1,5 +1,6 @@
 # Main entry point script - Get-MicrosoftTeamsChat.ps1
 
+[CmdletBinding(SupportsShouldProcess = $true)]
 # Define mandatory and optional parameters
 param(
     [Parameter(Mandatory = $true)]
@@ -42,19 +43,23 @@ foreach ($Chat in $Chats) {
     $ChatName = Get-ChatName -Chat $Chat
     $Messages = Get-ChatMessages -AccessToken $Token -ChatId $ChatId
 
-    # Determine export format
-    if ($AsJson) {
-        Export-ChatAsJson -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder
-    }
-    elseif ($AsCsv) {
-        Export-ChatAsCsv -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder
-    }
-    else {
-        Export-ChatAsHtml -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder -EmbedImages:$(!($NoImages))
-    }
+    if ($PSCmdlet.ShouldProcess("Chat '$ChatName'", "Export")) {
+        if ($AsJson) {
+            Export-ChatAsJson -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder
+        }
+        elseif ($AsCsv) {
+            Export-ChatAsCsv -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder
+        }
+        else {
+            Export-ChatAsHtml -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder -EmbedImages:$(!($NoImages))
+        }
 
-    Write-Log "Exported chat: $ChatName"
+        Write-Log "Exported chat: $ChatName"
+    } else {
+        Write-Log "Skipped chat (WhatIf): $ChatName"
+    }
 }
+
 
 # Completion message
 Write-Log "Export complete. Files saved to $ExportFolder"
