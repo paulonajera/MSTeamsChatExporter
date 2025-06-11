@@ -1,0 +1,55 @@
+MODIFICATIONS TO ORIGINAL PROJECT
+---------------------------------
+Repository Fork: telstrapurple/MSTeamsChatExporter
+Modified by: [Your Name / Org]
+Date: [Insert Date Here]
+
+SUMMARY:
+This fork refactors the original monolithic PowerShell script into a modular, CLI-driven architecture to improve usability, maintainability, and future scalability. This version is more suitable for IT teams managing internal tooling and allows for extensibility (e.g., alternate formats, retry logic, etc.).
+
+CHANGES MADE:
+
+1. Modularization of Script:
+   - Replaced the original Get-MicrosoftTeamsChat.ps1 with a new modular entry point.
+   - Introduced three new PowerShell modules under `Modules/`:
+     • GraphAPI.psm1 – handles Microsoft Graph authentication and data retrieval
+     • ChatExporter.psm1 – supports exporting chats in HTML, JSON, or CSV format
+     • Utils.psm1 – provides shared helper functions like logging and file sanitization
+
+2. Enhanced User Experience (UX):
+   - Replaced hardcoded values with CLI parameters:
+     • -ExportFolder
+     • -ClientId
+     • -TenantId
+     • -Domain
+     • -AsJson, -AsCsv, -NoImages, -SplitByMonth (CLI flags)
+   - Added logging with timestamps
+
+3. New Output Format Support:
+   - Added support for JSON and CSV output in addition to HTML
+   - HTML output simplified for performance and readability
+
+4. Security & Clarity Improvements:
+   - Removed unnecessary embedded images in exports by default
+   - Added filename sanitization and directory existence checks
+   - Commented every function for maintainability
+
+FILES REMOVED:
+   - TelstraPurpleFunctions.psm1 (replaced with modular design)
+   - powershell-analysis.yml (CI/CD metadata)
+   - chat.html, example-of-export.png, example-of-exports.png (sample/demo files)
+   - Original Get-MicrosoftTeamsChat.ps1 (replaced by modular version)
+
+USAGE:
+Run the modular version like so:
+   ./Get-MicrosoftTeamsChat.ps1 -ExportFolder "C:\Export" -ClientId "xxx" -TenantId "xxx" -Domain "yourdomain.com" -AsJson
+
+LICENSE:
+Original project is licensed under MIT. This fork remains MIT unless otherwise noted.
+
+NOTES:
+Future plans include:
+   - Async Graph API calls
+   - Throttling/backoff logic
+   - Token caching
+   - Per-user export scoping (if admin access permitted)

@@ -1,0 +1,6 @@
+MSTeamsChatExporter/
+├── Get-MicrosoftTeamsChat.ps1  ◄─ New modular entry point
+├── Modules/
+│   ├── GraphAPI.psm1           ◄─ Handles Graph authentication & data retrieval
+│   ├── ChatExporter.psm1       ◄─ Handles output formats (HTML/JSON/CSV)
+│   └── Utils.psm1              ◄─ Logging & shared utilities
