@@ -50,8 +50,8 @@ PS> ./Get-MicrosoftTeamsChat.ps1 -ExportFolder C:\Users\<you>\OneDrive\ExportCha
 - `-AsCsv` — export chats to CSV format
 - `-NoImages` — skips embedding images in HTML
 - `-SplitByMonth` — (planned) split messages into monthly files
-- `WhatIf` - Preview actions without making any changes (dry run mode)
-- `Confirm` - Prompt for confirmation before exporting each chat
+- `-WhatIf` - Preview actions without making any changes (dry run mode)
+- `-Confirm` - Prompt for confirmation before exporting each chat
 
 💡 Use -WhatIf to test safely, and -Confirm when you want full control over which chats get exported.
 
