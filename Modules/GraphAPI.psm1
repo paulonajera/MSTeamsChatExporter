@@ -40,47 +40,165 @@ function Get-GraphAccessToken {
     return $TokenResponse.access_token
 }
 
-# Retrieves a list of the signed-in user's chat threads
+
 function Get-UserChats {
     param(
         [Parameter(Mandatory = $true)][string]$AccessToken
     )
 
+    # Store all chats in an array
+    $allChats = @() 
+
     $uri = "https://graph.microsoft.com/v1.0/me/chats"
     $headers = @{ Authorization = "Bearer $AccessToken" }
-    $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-    return $response.value
+
+
+    # Loop to handle pagination
+    do {
+        try {
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+
+            # Add the chats from the current page
+            $allChats += $response.value
+
+            # Check for the nextLink
+            $nextLink = $response.'@odata.nextLink'
+
+            # Update for the next iteration
+            if ($nextLink) {
+                $uri = $nextLink
+            } else {
+                $uri = $null 
+            }
+        }
+        catch {
+            Write-Warning "Error fetching user chats: $_"
+            $uri = $null 
+        }
+    } while ($uri -ne $null) 
+
+    return $allChats
 }
 
-# Retrieves messages for a specific chat ID
+
+
 function Get-ChatMessages {
     param(
         [Parameter(Mandatory = $true)][string]$AccessToken,
         [Parameter(Mandatory = $true)][string]$ChatId
     )
 
-    $uri = "https://graph.microsoft.com/v1.0/chats/$ChatId/messages"
+    # Store all messages in an array
+    $allMessages = @() 
+
+    $uri = "https://graph.microsoft.com/v1.0/chats/$ChatId/messages?$top=50"
     $headers = @{ Authorization = "Bearer $AccessToken" }
-    $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-    return $response.value
+
+    do {
+        try {
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+            $allMessages += $response.value
+
+            # Check for nextLink
+            $nextLink = $response.'@odata.nextLink'
+
+            # Update for next iteration
+            if ($nextLink) {
+                $uri = $nextLink
+                # Write-Host "Fetching next page of messages: $uri"
+            } else {
+                # Exit the loop if no nextLink is present
+                $uri = $null 
+            }
+        }
+        catch {
+            Write-Warning "Error fetching chat messages for Chat ID '$ChatId': $_"
+            $uri = $null 
+        }
+    } while ($uri -ne $null)
+
+    return $allMessages
 }
 
-# Generates a display-friendly chat name based on topic or members
 function Get-ChatName {
     param(
-        [Parameter(Mandatory = $true)]$Chat
+    [Parameter(Mandatory = $true)]$Chat,
+    [Parameter(Mandatory = $true)][string]$AccessToken,
+    [Parameter(Mandatory = $true)][string]$CurrentUserId
     )
 
     # Use the topic if available
     if ($Chat.topic -ne $null -and $Chat.topic -ne "") {
         return $Chat.topic
     }
+
     # Fallback for 1-on-1 chats: use the other person's display name
     elseif ($Chat.chatType -eq "oneOnOne") {
-        return ($Chat.members | Where-Object { $_.user.displayName -ne $env:USERNAME }).user.displayName
+        $chatId = $Chat.id
+
+        $uri = "https://graph.microsoft.com/v1.0/chats/$chatId/members"
+        $headers = @{ Authorization = "Bearer $AccessToken" }
+
+        try {
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+
+            $members = $response.value 
+            # Write-Log "Members found:"
+            # foreach ($m in $members) {
+            #     Write-Log " - DisplayName: $($m.displayName), UserID: $($m.userId)"
+            # }
+
+            # Find the user who is NOT the current user
+            $otherMember = $members | Where-Object {
+                $_.userId -ne $CurrentUserId -and $_.displayName -ne $null
+            }
+            # Write-Log "Other Members (after filtering):"
+            # foreach ($o in $otherMember) {
+            #     Write-Log " - DisplayName: $($o.displayName), UserID: $($o.userId)"
+            # }
+
+            # Returning the displayName of the filtered member or a default name if not found
+            if ($otherMember) {
+                return $otherMember.displayName
+            } else {
+                return "Chat_$($Chat.id.Substring(0, 8))"
+            }
+        }
+        catch {
+            Write-Warning "Could not fetch chat members for Chat ID $($Chat.id): $_"
+            return "Chat_$($Chat.id.Substring(0, 8))"
+        }
     }
-    # Fallback for group chats: truncate the chat ID
+
+    # Fallback for group chats
     else {
         return "Chat_$($Chat.id.Substring(0, 8))"
     }
 }
+
+
+
+# Retrieves the current user
+function Get-User {
+    param(
+        [Parameter(Mandatory = $true)][string]$AccessToken
+    )
+
+    if (-not $AccessToken) {
+        Write-Warning "AccessToken is null or empty"
+        return $null
+    }
+
+    $uri = "https://graph.microsoft.com/v1.0/me"
+    $headers = @{ Authorization = "Bearer $AccessToken" }
+
+    try {
+        $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+        return $response
+    }
+    catch {
+        Write-Warning "Failed to retrieve current user: $_"
+        return $null
+    }
+}
+

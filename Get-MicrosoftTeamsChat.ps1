@@ -33,15 +33,28 @@ New-Item -ItemType Directory -Force -Path $ExportFolder | Out-Null
 Write-Log "Authenticating user..."
 $Token = Get-GraphAccessToken -ClientId $ClientId -TenantId $TenantId -Domain $Domain
 
+
+# Get the current user
+$currentUser = Get-User -AccessToken $Token
+$currentUserId = $currentUser.id
+
 # Fetch list of chats the user is part of
 Write-Log "Retrieving chat list..."
 $Chats = Get-UserChats -AccessToken $Token
+Write-Log "Retrieved $($Chats.Count) chats`n"
+
+
 
 # Loop through each chat and export messages
 foreach ($Chat in $Chats) {
     $ChatId = $Chat.id
-    $ChatName = Get-ChatName -Chat $Chat
+    Write-Log "Processing chat ID: $ChatId"
+
+    $ChatName = Get-ChatName -Chat $chat -AccessToken $Token -CurrentUserId $currentUserId
+    Write-Log "Chat Name: $ChatName"
+
     $Messages = Get-ChatMessages -AccessToken $Token -ChatId $ChatId
+    Write-Log "Retrieved $($Messages.Count) messages"
 
     if ($PSCmdlet.ShouldProcess("Chat '$ChatName'", "Export")) {
         if ($AsJson) {
@@ -54,9 +67,9 @@ foreach ($Chat in $Chats) {
             Export-ChatAsHtml -ChatName $ChatName -Messages $Messages -ExportFolder $ExportFolder -EmbedImages:$(!($NoImages))
         }
 
-        Write-Log "Exported chat: $ChatName"
+        Write-Log "Exported chat: $ChatName`n"
     } else {
-        Write-Log "Skipped chat (WhatIf): $ChatName"
+        Write-Log "Skipped chat (WhatIf): $ChatName`n"
     }
 }
 
